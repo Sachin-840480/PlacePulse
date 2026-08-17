@@ -1,57 +1,50 @@
 """
 BIT Mesra T&P Portal Scraper
 Logs in, fetches the dashboard job table, parses it into structured data.
-
-NOTE: Login form field names, action URL, and CSRF token handling below
-are PLACEHOLDERS. Need actual login page HTML to fill these in correctly.
 """
 
+import os
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+load_dotenv()  # reads .env in the current working directory into os.environ
 
 BASE_URL = "https://tp.bitmesra.co.in"
-LOGIN_PAGE_URL = f"{BASE_URL}/login"        # placeholder — confirm actual path
-LOGIN_POST_URL = f"{BASE_URL}/login"        # placeholder — confirm form action
-DASHBOARD_URL = f"{BASE_URL}/index.html"    # from your screenshot
+LOGIN_PAGE_URL = f"{BASE_URL}/index.html"          # login page is served at root
+LOGIN_POST_URL = f"{BASE_URL}/auth/login.html"     # confirmed from form action
+DASHBOARD_URL = f"{BASE_URL}/index.html"           # same URL, content differs once logged in
 
-USERNAME = "YOUR_ROLL_NO"      # move to env var / GitHub secret later
-PASSWORD = "YOUR_PASSWORD"     # move to env var / GitHub secret later
+# Pull from environment (GitHub Actions secrets) rather than hardcoding
+USERNAME = os.environ.get("TNP_USERNAME", "YOUR_ROLL_NO")
+PASSWORD = os.environ.get("TNP_PASSWORD", "YOUR_PASSWORD")
 
 
 def get_login_page(session: requests.Session):
-    """Fetch login page, return parsed soup (for token extraction) + sets session cookie."""
+    """Fetch login page — primarily to set initial session cookie."""
     resp = session.get(LOGIN_PAGE_URL)
     resp.raise_for_status()
     return BeautifulSoup(resp.text, "html.parser")
 
 
-def extract_csrf_token(soup: BeautifulSoup):
-    """
-    Placeholder — adjust selector once we see the real form.
-    Common patterns:
-      <input type="hidden" name="_token" value="...">
-      <input type="hidden" name="csrf_token" value="...">
-    """
-    token_input = soup.find("input", {"name": "_token"})
-    return token_input["value"] if token_input else None
-
-
 def login(session: requests.Session) -> bool:
-    login_soup = get_login_page(session)
-    csrf_token = extract_csrf_token(login_soup)
+    # No CSRF token in this form — just prime the session cookie first
+    get_login_page(session)
 
     payload = {
-        "username": USERNAME,   # placeholder — confirm real field name
-        "password": PASSWORD,   # placeholder — confirm real field name
+        "identity": USERNAME,
+        "password": PASSWORD,
+        "submit": "Login",
     }
-    if csrf_token:
-        payload["_token"] = csrf_token
 
     resp = session.post(LOGIN_POST_URL, data=payload)
     resp.raise_for_status()
 
-    # crude success check — refine once we know what a real failure looks like
-    return "logout.html" in resp.text or "Satyam Kumar" not in resp.text is False
+    # Success check: logged-in dashboard has a #job-listings table and a Logout link;
+    # the login form (identity/password fields) should be gone.
+    soup = BeautifulSoup(resp.text, "html.parser")
+    still_has_login_form = soup.find("input", {"name": "identity"}) is not None
+    return not still_has_login_form
 
 
 def fetch_dashboard(session: requests.Session) -> str:

@@ -1,3 +1,10 @@
 # Ignore these Files.
 
 .env
+__pycache__/
+*.pyc
+
+
+
+# DONOT COMMIT THIS EVER.
+placepulse-4118e-firebase-adminsdk-fbsvc-619f96de0a.json
