@@ -3,3 +3,6 @@
 
 # DONOT COMMIT THIS EVER.
 firebase-key.json
+
+# Dont track _init_.py
+**/__init__.py
