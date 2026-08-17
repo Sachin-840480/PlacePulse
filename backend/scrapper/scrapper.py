@@ -89,7 +89,8 @@ def parse_jobs(html: str):
     return jobs
 
 
-def main():
+def scrape_jobs():
+    """Login + fetch + parse. Returns list of job dicts. Used by main() and by firestore_sync.py."""
     session = requests.Session()
     session.headers.update({
         "User-Agent": "Mozilla/5.0 (compatible; TnPJobScraper/1.0)"
@@ -99,11 +100,13 @@ def main():
         raise RuntimeError("Login failed — check credentials/selectors")
 
     html = fetch_dashboard(session)
-    jobs = parse_jobs(html)
+    return parse_jobs(html)
 
+
+def main():
+    jobs = scrape_jobs()
     for job in jobs:
         print(job)
-
     return jobs
 
 
