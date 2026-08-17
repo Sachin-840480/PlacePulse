@@ -3,8 +3,3 @@
 .env
 __pycache__/
 *.pyc
-
-
-
-# DONOT COMMIT THIS EVER.
-firebase-key.json

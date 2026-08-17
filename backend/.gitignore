@@ -1,2 +1,5 @@
 # Ignore the Venv Folder
 .venv
+
+# DONOT COMMIT THIS EVER.
+firebase-key.json

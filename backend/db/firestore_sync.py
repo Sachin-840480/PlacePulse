@@ -14,7 +14,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore, messaging
 
-from scraper.scrapper import scrape_jobs
+from scraper.scraper import scrape_jobs
 
 SERVICE_ACCOUNT_PATH = os.environ.get("FIREBASE_KEY_PATH", "firebase-key.json")
 JOBS_COLLECTION = "jobs"
