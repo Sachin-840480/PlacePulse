@@ -4,6 +4,9 @@
 google-services.json
 GoogleService-Info.plist
 
+# firestore rules
+firestore.rules
+
 # dependencies
 node_modules/
 
