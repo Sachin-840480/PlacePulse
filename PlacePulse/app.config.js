@@ -13,7 +13,7 @@ export default {
     },
     android: {
       package: "com.placepulse.app",
-      googleServicesFile: "./google-services.json",
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
