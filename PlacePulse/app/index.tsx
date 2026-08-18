@@ -70,7 +70,7 @@ export default function JobListScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#d62828" />
+        <ActivityIndicator size="large" color="#0d9488" />
         <Text style={styles.loadingText}>Loading jobs…</Text>
       </View>
     );
@@ -94,7 +94,7 @@ export default function JobListScreen() {
       keyExtractor={(item) => item.job_id}
       contentContainerStyle={styles.list}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#d62828']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d9488']} />
       }
       renderItem={({ item }) => {
         const isHighlighted = item.job_id === highlightedId;
@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
   },
   cardHighlighted: {
     borderWidth: 2,
-    borderColor: '#d62828',
-    backgroundColor: '#fff5f5',
+    borderColor: '#0d9488',
+    backgroundColor: '#f0fdfa',
   },
   newBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#d62828',
+    backgroundColor: '#0d9488',
     color: '#fff',
     fontSize: 11,
     fontWeight: '700',
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 10,
-    backgroundColor: '#d62828',
+    backgroundColor: '#0d9488',
     paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',
