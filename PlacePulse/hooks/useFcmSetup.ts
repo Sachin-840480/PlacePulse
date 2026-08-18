@@ -8,6 +8,7 @@ import {
   onNotificationOpenedApp,
   getInitialNotification,
 } from '@react-native-firebase/messaging';
+import { createNewJobsChannel, displayForegroundNotification } from './notificationChannel';
 
 const NEW_JOBS_TOPIC = 'new-jobs';
 
@@ -25,6 +26,9 @@ export function useFcmSetup() {
 
     async function setup() {
       const messagingInstance = getMessaging();
+
+      // Create the high-importance channel before any notification needs it
+      await createNewJobsChannel();
 
       // Android 13+ (API 33+) requires runtime permission for notifications
       const authStatus = await requestPermission(messagingInstance);
@@ -45,7 +49,9 @@ export function useFcmSetup() {
       // handle them here (e.g. show an in-app banner/toast).
       unsubscribeForeground = onMessage(messagingInstance, async (remoteMessage) => {
         console.log('Foreground FCM message:', remoteMessage);
-        // TODO: wire to an in-app toast/banner component
+        const title = remoteMessage.notification?.title ?? 'New update';
+        const body = remoteMessage.notification?.body ?? '';
+        await displayForegroundNotification(title, body);
       });
 
       // User tapped a notification while app was backgrounded (not killed)

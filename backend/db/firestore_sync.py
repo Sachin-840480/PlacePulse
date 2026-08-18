@@ -67,6 +67,12 @@ def send_push_notification(new_jobs: list):
         data={
             "job_ids": ",".join(j["job_id"] for j in new_jobs),
         },
+        android=messaging.AndroidConfig(
+            priority="high",
+            notification=messaging.AndroidNotification(
+                channel_id="new-jobs-high",  # must match NEW_JOBS_CHANNEL_ID in the app
+            ),
+        ),
     )
 
     response = messaging.send(message)
