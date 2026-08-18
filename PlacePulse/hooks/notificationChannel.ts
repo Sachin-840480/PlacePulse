@@ -26,11 +26,19 @@ export async function createNewJobsChannel() {
  * the app will handle showing something itself, since the user is
  * already looking at it. This is what makes foreground notifications
  * behave the same as background ones (heads-up popup).
+ *
+ * `data` is passed through so a tap on this notification can still
+ * carry job_ids for navigation, same as background/killed-state taps.
  */
-export async function displayForegroundNotification(title: string, body: string) {
+export async function displayForegroundNotification(
+  title: string,
+  body: string,
+  data?: Record<string, string>
+) {
   await notifee.displayNotification({
     title,
     body,
+    data,
     android: {
       channelId: NEW_JOBS_CHANNEL_ID,
       importance: AndroidImportance.HIGH,

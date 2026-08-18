@@ -1,6 +1,16 @@
-import { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  Linking,
+  StyleSheet,
+  RefreshControl,
+} from 'react-native';
 import { getFirestore, collection, query, orderBy, onSnapshot } from '@react-native-firebase/firestore';
+import { useLocalSearchParams } from 'expo-router';
 
 type Job = {
   job_id: string;
@@ -14,10 +24,11 @@ type Job = {
 export default function JobListScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const { highlight } = useLocalSearchParams<{ highlight?: string }>();
+  const [highlightedId, setHighlightedId] = useState<string | undefined>(highlight);
 
   useEffect(() => {
-    // Real-time listener — updates automatically when the backend writes a new job,
-    // no manual refresh needed.
     const db = getFirestore();
     const jobsQuery = query(collection(db, 'jobs'), orderBy('first_seen_at', 'desc'));
 
@@ -27,20 +38,40 @@ export default function JobListScreen() {
         const data = snapshot.docs.map((doc) => doc.data() as Job);
         setJobs(data);
         setLoading(false);
+        setRefreshing(false);
       },
       (error) => {
         console.error('Firestore listener error:', error);
         setLoading(false);
+        setRefreshing(false);
       }
     );
 
     return () => unsubscribe();
   }, []);
 
+  // Update the highlight when a fresh notification tap sends a new param,
+  // and clear it after a few seconds so it doesn't stay highlighted forever.
+  useEffect(() => {
+    if (!highlight) return;
+    setHighlightedId(highlight);
+    const timer = setTimeout(() => setHighlightedId(undefined), 4000);
+    return () => clearTimeout(timer);
+  }, [highlight]);
+
+  // Firestore's onSnapshot listener already pushes updates in real time,
+  // so pull-to-refresh doesn't need a manual re-fetch — it just gives the
+  // user a familiar gesture and a brief spinner for reassurance.
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 600);
+  }, []);
+
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#d62828" />
+        <Text style={styles.loadingText}>Loading jobs…</Text>
       </View>
     );
   }
@@ -48,7 +79,11 @@ export default function JobListScreen() {
   if (jobs.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No jobs posted yet.</Text>
+        <Text style={styles.emptyEmoji}>📭</Text>
+        <Text style={styles.emptyTitle}>No jobs yet</Text>
+        <Text style={styles.emptySubtitle}>
+          New postings from the T&P portal will show up here automatically.
+        </Text>
       </View>
     );
   }
@@ -58,19 +93,26 @@ export default function JobListScreen() {
       data={jobs}
       keyExtractor={(item) => item.job_id}
       contentContainerStyle={styles.list}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Text style={styles.company}>{item.company}</Text>
-          <Text style={styles.meta}>Posted: {item.posted_on}</Text>
-          <Text style={styles.meta}>Deadline: {item.deadline}</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => Linking.openURL(item.apply_url)}
-          >
-            <Text style={styles.buttonText}>View & Apply</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#d62828']} />
+      }
+      renderItem={({ item }) => {
+        const isHighlighted = item.job_id === highlightedId;
+        return (
+          <View style={[styles.card, isHighlighted && styles.cardHighlighted]}>
+            {isHighlighted && <Text style={styles.newBadge}>NEW</Text>}
+            <Text style={styles.company}>{item.company}</Text>
+            <Text style={styles.meta}>Posted: {item.posted_on}</Text>
+            <Text style={styles.meta}>Deadline: {item.deadline}</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => Linking.openURL(item.apply_url)}
+            >
+              <Text style={styles.buttonText}>View & Apply</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      }}
     />
   );
 }
@@ -80,10 +122,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#888',
+  },
+  emptyEmoji: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
   },
   list: {
     padding: 12,
@@ -98,6 +156,22 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+  },
+  cardHighlighted: {
+    borderWidth: 2,
+    borderColor: '#d62828',
+    backgroundColor: '#fff5f5',
+  },
+  newBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#d62828',
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 6,
   },
   company: {
     fontSize: 17,
