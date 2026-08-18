@@ -1,98 +1,128 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [jobCount, setJobCount] = useState<number | null>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    const db = getFirestore();
+    // Lightweight count-only listener — just for the tile subtitle, doesn't
+    // need full job data like the jobs screen does.
+    const unsubscribe = onSnapshot(collection(db, 'jobs'), (snapshot) => {
+      setJobCount(snapshot.size);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.hero}>
+        <Image
+          source={require('../../assets/images/icon.png')}
+          style={styles.heroIcon}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>PlacePulse</Text>
+        <Text style={styles.tagline}>Never miss a placement update</Text>
+      </View>
+
+      <View style={styles.tiles}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push('/jobs')}>
+          <Text style={styles.tileEmoji}>💼</Text>
+          <View style={styles.tileTextWrap}>
+            <Text style={styles.tileTitle}>Job Listings</Text>
+            <Text style={styles.tileSubtitle}>
+              {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.tile}>
+          <Text style={styles.tileEmoji}>🔔</Text>
+          <View style={styles.tileTextWrap}>
+            <Text style={styles.tileTitle}>Notifications</Text>
+            <Text style={styles.tileSubtitle}>You'll be alerted the moment a new job is posted</Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity style={styles.tile} onPress={() => router.push('/modal')}>
+          <Text style={styles.tileEmoji}>ℹ️</Text>
+          <View style={styles.tileTextWrap}>
+            <Text style={styles.tileTitle}>App Info</Text>
+            <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.footer}>Built for BIT Mesra T&P · unofficial</Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#f7fafa',
+  },
+  hero: {
+    alignItems: 'center',
+    marginBottom: 36,
+  },
+  heroIcon: {
+    width: 84,
+    height: 84,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  tiles: {
+    gap: 12,
+  },
+  tile: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  tileEmoji: {
+    fontSize: 30,
+    marginRight: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  tileTextWrap: {
+    flex: 1,
+  },
+  tileTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  tileSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+  },
+  footer: {
+    marginTop: 40,
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#94a3b8',
   },
 });
