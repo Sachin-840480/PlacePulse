@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "706442666092",
+    "project_id": "placepulse-4118e",
+    "storage_bucket": "placepulse-4118e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706442666092:android:2648f43089a6e8173bb849",
+        "android_client_info": {
+          "package_name": "com.placepulse.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkieVNR8TYGi_qIThqdjarSA5qUjpdv78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

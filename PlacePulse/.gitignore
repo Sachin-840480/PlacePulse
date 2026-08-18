@@ -6,6 +6,9 @@ GoogleService-Info.plist
 # firestore rules
 firestore.rules
 
+# Hide app.json {Backup}
+app.backup.json
+
 # dependencies
 node_modules/
 
