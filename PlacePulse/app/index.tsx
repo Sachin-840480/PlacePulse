@@ -30,7 +30,7 @@ export default function JobListScreen() {
 
   useEffect(() => {
     const db = getFirestore();
-    const jobsQuery = query(collection(db, 'jobs'), orderBy('first_seen_at', 'desc'));
+    const jobsQuery = query(collection(db, 'jobs'), orderBy('posted_on_date', 'desc'));
 
     const unsubscribe = onSnapshot(
       jobsQuery,

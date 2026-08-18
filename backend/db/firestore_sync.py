@@ -11,6 +11,7 @@ Flow each run:
 """
 
 import os
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore, messaging
 
@@ -34,6 +35,17 @@ def get_existing_job_ids(db) -> set:
     return {doc.id for doc in docs}
 
 
+def parse_posted_on(posted_on: str):
+    """Portal dates are dd/mm/yyyy strings — parse into a real datetime
+    so Firestore can sort by it correctly. Falls back to None (job sorts
+    last) if the format ever changes unexpectedly, rather than crashing
+    the whole sync."""
+    try:
+        return datetime.strptime(posted_on, "%d/%m/%Y")
+    except (ValueError, TypeError):
+        return None
+
+
 def write_new_jobs(db, new_jobs: list):
     """Write each new job as a Firestore doc, keyed by job_id."""
     batch = db.batch()
@@ -41,6 +53,7 @@ def write_new_jobs(db, new_jobs: list):
         doc_ref = db.collection(JOBS_COLLECTION).document(job["job_id"])
         batch.set(doc_ref, {
             **job,
+            "posted_on_date": parse_posted_on(job["posted_on"]),
             "first_seen_at": firestore.SERVER_TIMESTAMP,
         })
     batch.commit()
