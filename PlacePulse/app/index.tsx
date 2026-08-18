@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Linking, StyleSheet } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
+import { getFirestore, collection, query, orderBy, onSnapshot } from '@react-native-firebase/firestore';
 
 type Job = {
   job_id: string;
@@ -18,20 +18,21 @@ export default function JobListScreen() {
   useEffect(() => {
     // Real-time listener — updates automatically when the backend writes a new job,
     // no manual refresh needed.
-    const unsubscribe = firestore()
-      .collection('jobs')
-      .orderBy('first_seen_at', 'desc')
-      .onSnapshot(
-        (snapshot) => {
-          const data = snapshot.docs.map((doc) => doc.data() as Job);
-          setJobs(data);
-          setLoading(false);
-        },
-        (error) => {
-          console.error('Firestore listener error:', error);
-          setLoading(false);
-        }
-      );
+    const db = getFirestore();
+    const jobsQuery = query(collection(db, 'jobs'), orderBy('first_seen_at', 'desc'));
+
+    const unsubscribe = onSnapshot(
+      jobsQuery,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => doc.data() as Job);
+        setJobs(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Firestore listener error:', error);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
