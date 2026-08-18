@@ -21,7 +21,7 @@ function firstJobId(data: Record<string, string> | undefined): string | undefine
 
 function navigateToJob(jobId: string | undefined) {
   if (!jobId) return;
-  router.push({ pathname: '/', params: { highlight: jobId } });
+  router.push({ pathname: '/jobs', params: { highlight: jobId } });
 }
 
 /**
@@ -31,7 +31,7 @@ function navigateToJob(jobId: string | undefined) {
  *  - Creating the high-importance notification channel
  *  - Subscribing the device to the 'new-jobs' FCM topic
  *  - Listening for foreground messages and displaying them via notifee
- *  - Navigating to the tapped job in every app state (foreground, background, killed)
+ *  - Navigating to the tapped job (on the /jobs screen) in every app state
  */
 export function useFcmSetup() {
   useEffect(() => {
