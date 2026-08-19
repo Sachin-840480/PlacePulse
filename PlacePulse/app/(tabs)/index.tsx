@@ -1,15 +1,19 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Modal } from 'react-native';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
 
+import AppDrawer from '../../components/AppDrawer';
+
 export default function HomeScreen() {
   const [jobCount, setJobCount] = useState<number | null>(null);
   const [openCount, setOpenCount] = useState<number | null>(null);
   const [newThisWeek, setNewThisWeek] = useState<number | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const db = getFirestore();
@@ -64,7 +68,15 @@ const unsubMeta = onSnapshot(
   }, []);
 
   return (
+    <>
     <ScrollView contentContainerStyle={styles.container}>
+
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => setDrawerOpen(true)} hitSlop={12}>
+          <Ionicons name="menu-outline" size={26} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.hero}>
         <Image
           source={require('../../assets/images/icon.png')}
@@ -129,6 +141,21 @@ const unsubMeta = onSnapshot(
 
       <Text style={styles.footer}>Built for BIT Mesra T&P · unofficial</Text>
     </ScrollView>
+
+    <Modal
+      visible={drawerOpen}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setDrawerOpen(false)}
+    >
+      <View style={styles.drawerOverlay}>
+        <View style={styles.drawerPanel}>
+          <AppDrawer onClose={() => setDrawerOpen(false)} />
+        </View>
+        <TouchableOpacity style={styles.drawerBackdrop} onPress={() => setDrawerOpen(false)} />
+      </View>
+    </Modal>
+  </>
   );
 }
 
@@ -171,7 +198,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 50,
     backgroundColor: colors.bg,
   },
   hero: {
@@ -182,6 +209,22 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     marginBottom: 16,
+  },
+  topBar: {
+    flexDirection: 'row',
+    paddingBottom: 8,
+  },
+  drawerOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  drawerPanel: {
+    width: '78%',
+    backgroundColor: colors.bg,
+  },
+  drawerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   title: {
     fontSize: 28,
