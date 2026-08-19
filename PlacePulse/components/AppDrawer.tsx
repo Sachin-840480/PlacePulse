@@ -51,7 +51,7 @@ const sections: { label: string; items: Item[] }[] = [
   },
   {
     label: 'App',
-    items: [{ icon: 'settings-outline', label: 'Settings', route: '/settings' }],
+    items: [{ icon: 'settings-outline', label: 'Settings', route: '/coming-soon' }],
   },
 ];
 
