@@ -56,7 +56,7 @@ export function useFcmSetup() {
         }
 
         await subscribeToTopic(messagingInstance, NEW_JOBS_TOPIC);
-        console.log(`Subscribed to topic: ${NEW_JOBS_TOPIC}`);
+        // console.log(`Subscribed to topic: ${NEW_JOBS_TOPIC}`);   // To Check if the Data is being fetched from FireStore.
 
         // App is open (foreground) — Android won't auto-show anything, so we
         // display it ourselves via notifee.

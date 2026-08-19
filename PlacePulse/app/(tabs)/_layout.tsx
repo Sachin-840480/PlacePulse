@@ -28,7 +28,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="jobs-tab-placeholder"
+        name="jobs-placeholder"
         options={{
           title: "Jobs",
           tabBarIcon: ({ color, size }) => (

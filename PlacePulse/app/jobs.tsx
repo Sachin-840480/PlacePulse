@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   Linking,
   StyleSheet,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { getFirestore, collection, query, orderBy, onSnapshot } from '@react-native-firebase/firestore';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 type Job = {
@@ -26,6 +27,7 @@ export default function JobsScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const { highlight } = useLocalSearchParams<{ highlight?: string }>();
   const [highlightedId, setHighlightedId] = useState<string | undefined>(highlight);
 
@@ -68,6 +70,12 @@ export default function JobsScreen() {
     setTimeout(() => setRefreshing(false), 600);
   }, []);
 
+  const filteredJobs = useMemo(() => {
+    if (!searchText.trim()) return jobs;
+    const q = searchText.trim().toLowerCase();
+    return jobs.filter((j) => j.company.toLowerCase().includes(q));
+  }, [jobs, searchText]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -77,48 +85,100 @@ export default function JobsScreen() {
     );
   }
 
-  if (jobs.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Ionicons name="file-tray-outline" size={40} color="#888" style={styles.emptyIcon} />
-        <Text style={styles.emptyTitle}>No jobs yet</Text>
-        <Text style={styles.emptySubtitle}>
-          New postings from the T&P portal will show up here automatically.
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <FlatList
-      data={jobs}
-      keyExtractor={(item) => item.job_id}
-      contentContainerStyle={styles.list}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d9488']} />
-      }
-      renderItem={({ item }) => {
-        const isHighlighted = item.job_id === highlightedId;
-        return (
-          <View style={[styles.card, isHighlighted && styles.cardHighlighted]}>
-            {isHighlighted && <Text style={styles.newBadge}>NEW</Text>}
-            <Text style={styles.company}>{item.company}</Text>
-            <Text style={styles.meta}>Posted: {item.posted_on}</Text>
-            <Text style={styles.meta}>Deadline: {item.deadline}</Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => Linking.openURL(item.apply_url)}
-            >
-              <Text style={styles.buttonText}>View & Apply</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }}
-    />
+    <View style={styles.screen}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search-outline" size={18} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by company"
+          placeholderTextColor="#999"
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {searchText.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchText('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={18} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {jobs.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="file-tray-outline" size={40} color="#888" style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>No jobs yet</Text>
+          <Text style={styles.emptySubtitle}>
+            New postings from the T&P portal will show up here automatically.
+          </Text>
+        </View>
+      ) : filteredJobs.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="search-outline" size={40} color="#888" style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>No matches</Text>
+          <Text style={styles.emptySubtitle}>
+            No jobs found for "{searchText}".
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredJobs}
+          keyExtractor={(item) => item.job_id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d9488']} />
+          }
+          renderItem={({ item }) => {
+            const isHighlighted = item.job_id === highlightedId;
+            return (
+              <View style={[styles.card, isHighlighted && styles.cardHighlighted]}>
+                {isHighlighted && <Text style={styles.newBadge}>NEW</Text>}
+                <Text style={styles.company}>{item.company}</Text>
+                <Text style={styles.meta}>Posted: {item.posted_on}</Text>
+                <Text style={styles.meta}>Deadline: {item.deadline}</Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => Linking.openURL(item.apply_url)}
+                >
+                  <Text style={styles.buttonText}>View & Apply</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#222',
+    padding: 0,
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',

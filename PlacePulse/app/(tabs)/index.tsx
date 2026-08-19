@@ -1,67 +1,80 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Modal, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Extrapolation,
+  runOnJS,
+} from 'react-native-reanimated';
 
 import AppDrawer from '../../components/AppDrawer';
+
+const DRAWER_WIDTH = 300;
 
 export default function HomeScreen() {
   const [jobCount, setJobCount] = useState<number | null>(null);
   const [openCount, setOpenCount] = useState<number | null>(null);
   const [newThisWeek, setNewThisWeek] = useState<number | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
-
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-300)).current;
-  const dragX = useRef(new Animated.Value(-300)).current;
+  
+  const dragX = useSharedValue(-DRAWER_WIDTH);
+  const startX = useSharedValue(0);
 
   const openDrawer = () => {
     setDrawerVisible(true);
-    slideAnim.setValue(0);
-    Animated.timing(dragX, {
-      toValue: 0,
-      duration: 220,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
+    dragX.value = withTiming(0, { duration: 220 });
   };
 
   const closeDrawer = () => {
-    Animated.timing(dragX, {
-      toValue: -300,
-      duration: 200,
-      easing: Easing.in(Easing.cubic),
-      useNativeDriver: true,
-    }).start(() => setDrawerVisible(false));
+    dragX.value = withTiming(-DRAWER_WIDTH, { duration: 200 }, (finished) => {
+      if (finished) runOnJS(setDrawerVisible)(false);
+    });
   };
 
-  const onEdgeGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: dragX } }],
-    { useNativeDriver: true }
-  );
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-20, 20])
+    .onStart(() => {
+      startX.value = dragX.value;
+    })
+    .onUpdate((e) => {
+      const next = startX.value + e.translationX;
+      dragX.value = Math.min(0, Math.max(-DRAWER_WIDTH, next));
+    })
+    .onEnd((e) => {
+      const shouldOpen =
+        dragX.value > -DRAWER_WIDTH / 2 || e.velocityX > 600;
 
-  const onEdgeHandlerStateChange = (e: any) => {
-    if (e.nativeEvent.oldState === State.ACTIVE) {
-      const { translationX, velocityX } = e.nativeEvent;
-      if (translationX > 80 || velocityX > 600) {
-        setDrawerVisible(true);
-        Animated.timing(dragX, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }).start();
+      if (shouldOpen) {
+        dragX.value = withTiming(0, { duration: 150 });
+        runOnJS(setDrawerVisible)(true);
       } else {
-        Animated.timing(dragX, {
-          toValue: -300,
-          duration: 150,
-          useNativeDriver: true,
-        }).start(() => setDrawerVisible(false));
+        dragX.value = withTiming(-DRAWER_WIDTH, { duration: 150 }, (finished) => {
+          if (finished) runOnJS(setDrawerVisible)(false);
+        });
       }
-    }
-  };
+    });
+
+  const contentStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(
+          dragX.value,
+          [-DRAWER_WIDTH, 0],
+          [0, 260],
+          Extrapolation.CLAMP
+        ),
+      },
+    ],
+  }));
 
   useEffect(() => {
     const db = getFirestore();
@@ -99,7 +112,6 @@ export default function HomeScreen() {
     const unsubMeta = onSnapshot(
       collection(db, 'meta'),
       (snap) => {
-        console.log('meta docs:', snap.docs.map(d => ({ id: d.id, data: d.data() })));
         const doc = snap.docs.find((d) => d.id === 'sync');
         if (doc) {
           const ts = doc.data().lastSyncedAt?.toDate?.();
@@ -116,97 +128,74 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <PanGestureHandler
-      onGestureEvent={onEdgeGestureEvent}
-      onHandlerStateChange={onEdgeHandlerStateChange}
-      activeOffsetX={20}
-      failOffsetY={[-20, 20]}
-      hitSlop={{ left: 0, width: 30 }}
-    >
-      <Animated.View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
-
-          <View style={styles.topBar}>
-            <TouchableOpacity onPress={openDrawer} hitSlop={12}>
-              <Ionicons name="menu-outline" size={26} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.hero}>
-            <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.heroIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>PlacePulse</Text>
-            <Text style={styles.tagline}>Never miss a placement update</Text>
-          </View>
-
-          {/* Full width: Job Listings */}
-          <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/jobs')}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="briefcase-outline" size={24} color={colors.primary} />
-            </View>
-            <View style={styles.tileTextWrap}>
-              <Text style={styles.tileTitle}>Job Listings</Text>
-              <Text style={styles.tileSubtitle}>
-                {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
-          </TouchableOpacity>
-
-          {/* Half-width stat grid */}
-          <View style={styles.statGrid}>
-            <StatCard
-              icon="layers-outline"
-              label="Total Jobs"
-              value={jobCount === null ? '–' : jobCount}
-            />
-            <StatCard
-              icon="checkmark-circle-outline"
-              label="Open to Apply"
-              value={openCount === null ? '–' : openCount}
-              accent
-            />
-            <StatCard
-              icon="trending-up-outline"
-              label="New This Week"
-              value={newThisWeek === null ? '–' : newThisWeek}
-            />
-            <StatCard
-              icon="time-outline"
-              label="Last Synced"
-              value={lastSynced ?? '–'}
-              small
-            />
-          </View>
-
-          {/* Full width: About */}
-          <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/modal')}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
-            </View>
-            <View style={styles.tileTextWrap}>
-              <Text style={styles.tileTitle}>App Info</Text>
-              <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
-          </TouchableOpacity>
-
-          <Text style={styles.footer}>Built for BIT Mesra T&P · unofficial</Text>
-        </ScrollView>
-
-      <Modal visible={drawerVisible} transparent animationType="none" onRequestClose={closeDrawer}>
-        <View style={styles.drawerOverlay}>
-          <Animated.View style={[styles.drawerPanel, { transform: [{ translateX: dragX }] }]}>
-            <AppDrawer onClose={closeDrawer} />
-          </Animated.View>
-          <TouchableOpacity style={styles.drawerBackdrop} onPress={closeDrawer} activeOpacity={1} />
+    <GestureDetector gesture={panGesture}>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={styles.drawerBehind}>
+          <AppDrawer onClose={closeDrawer} />
         </View>
-      </Modal>
-    </Animated.View>
-  </PanGestureHandler>
+
+        <Animated.View style={[{ flex: 1 }, contentStyle]}>
+          <ScrollView contentContainerStyle={styles.container} scrollEnabled={!drawerVisible}>
+            <View style={styles.topBar}>
+              <TouchableOpacity onPress={drawerVisible ? closeDrawer : openDrawer} hitSlop={12}>
+                <Ionicons name="menu-outline" size={26} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.hero}>
+              <Image
+                source={require('../../assets/images/icon.png')}
+                style={styles.heroIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>PlacePulse</Text>
+              <Text style={styles.tagline}>Never miss a placement update</Text>
+            </View>
+
+            <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/jobs')}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="briefcase-outline" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.tileTextWrap}>
+                <Text style={styles.tileTitle}>Job Listings</Text>
+                <Text style={styles.tileSubtitle}>
+                  {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
+            </TouchableOpacity>
+
+            <View style={styles.statGrid}>
+              <StatCard icon="layers-outline" label="Total Jobs" value={jobCount === null ? '–' : jobCount} />
+              <StatCard icon="checkmark-circle-outline" label="Open to Apply" value={openCount === null ? '–' : openCount} accent />
+              <StatCard icon="trending-up-outline" label="New This Week" value={newThisWeek === null ? '–' : newThisWeek} />
+              <StatCard icon="time-outline" label="Last Synced" value={lastSynced ?? '–'} small />
+            </View>
+
+            <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/modal')}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.tileTextWrap}>
+                <Text style={styles.tileTitle}>App Info</Text>
+                <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
+            </TouchableOpacity>
+
+            <Text style={styles.footer}>Built for BIT Mesra T&P · unofficial</Text>
+          </ScrollView>
+
+          {drawerVisible && (
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              onPress={closeDrawer}
+              activeOpacity={1}
+            />
+          )}
+        </Animated.View>
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -265,17 +254,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: 8,
   },
-  drawerOverlay: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  drawerPanel: {
-    width: '78%',
-    backgroundColor: colors.bg,
-  },
-  drawerBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+  drawerBehind: {
+    ...StyleSheet.absoluteFillObject,
+    width: DRAWER_WIDTH,
   },
   title: {
     fontSize: 28,
