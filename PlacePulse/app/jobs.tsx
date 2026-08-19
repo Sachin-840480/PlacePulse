@@ -23,11 +23,14 @@ type Job = {
   apply_url: string;
 };
 
+const PAGE_SIZE = 20;
+
 export default function JobsScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { highlight } = useLocalSearchParams<{ highlight?: string }>();
   const [highlightedId, setHighlightedId] = useState<string | undefined>(highlight);
 
@@ -76,6 +79,20 @@ export default function JobsScreen() {
     return jobs.filter((j) => j.company.toLowerCase().includes(q));
   }, [jobs, searchText]);
 
+  // Reset how many rows are shown whenever the search term or underlying
+  // job list changes, so a new search always starts from the top page.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchText, jobs.length]);
+
+  const visibleJobs = filteredJobs.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredJobs.length;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore) return;
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredJobs.length));
+  }, [hasMore, filteredJobs.length]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -123,11 +140,22 @@ export default function JobsScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredJobs}
+          data={visibleJobs}
           keyExtractor={(item) => item.job_id}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d9488']} />
+          }
+          onEndReachedThreshold={0.6}
+          onEndReached={loadMore}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color="#0d9488" />
+              </View>
+            ) : filteredJobs.length > PAGE_SIZE ? (
+              <Text style={styles.footerEnd}>You've reached the end</Text>
+            ) : null
           }
           renderItem={({ item }) => {
             const isHighlighted = item.job_id === highlightedId;
@@ -205,6 +233,15 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 12,
+  },
+  footerLoading: {
+    paddingVertical: 20,
+  },
+  footerEnd: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#aaa',
+    paddingVertical: 16,
   },
   card: {
     backgroundColor: '#fff',
