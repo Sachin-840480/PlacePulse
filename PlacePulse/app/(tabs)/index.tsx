@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'rea
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [jobCount, setJobCount] = useState<number | null>(null);
@@ -30,17 +31,22 @@ export default function HomeScreen() {
 
       <View style={styles.tiles}>
         <TouchableOpacity style={styles.tile} onPress={() => router.push('/jobs')}>
-          <Text style={styles.tileEmoji}>💼</Text>
+          <View style={styles.iconContainer}>
+            <Ionicons name="briefcase-outline" size={24} color="#2563eb" />
+          </View>
           <View style={styles.tileTextWrap}>
             <Text style={styles.tileTitle}>Job Listings</Text>
             <Text style={styles.tileSubtitle}>
               {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
             </Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
         </TouchableOpacity>
 
         <View style={styles.tile}>
-          <Text style={styles.tileEmoji}>🔔</Text>
+          <View style={styles.iconContainer}>
+            <Ionicons name="notifications-outline" size={24} color="#2563eb" />
+          </View>
           <View style={styles.tileTextWrap}>
             <Text style={styles.tileTitle}>Notifications</Text>
             <Text style={styles.tileSubtitle}>You'll be alerted the moment a new job is posted</Text>
@@ -48,11 +54,14 @@ export default function HomeScreen() {
         </View>
         
         <TouchableOpacity style={styles.tile} onPress={() => router.push('/modal')}>
-          <Text style={styles.tileEmoji}>ℹ️</Text>
+          <View style={styles.iconContainer}>
+            <Ionicons name="information-circle-outline" size={24} color="#2563eb" />
+          </View>
           <View style={styles.tileTextWrap}>
             <Text style={styles.tileTitle}>App Info</Text>
             <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
         </TouchableOpacity>
       </View>
 
@@ -102,8 +111,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  tileEmoji: {
-    fontSize: 30,
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   tileTextWrap: {
@@ -118,6 +132,7 @@ const styles = StyleSheet.create({
   tileSubtitle: {
     fontSize: 13,
     color: '#64748b',
+    lineHeight: 18,
   },
   footer: {
     marginTop: 40,
