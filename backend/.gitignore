@@ -6,3 +6,6 @@ firebase-key.json
 
 # Dont track _init_.py
 **/__init__.py
+
+# Testing job Seeding. (Only for Testing "Infinite Scrool")
+db/seed_fake_jobs.py
