@@ -9,6 +9,9 @@ firestore.rules
 # Hide app.json {Backup}
 app.backup.json
 
+# App Icon Main Image.
+assets/PlacePulse.png
+
 # dependencies
 node_modules/
 
