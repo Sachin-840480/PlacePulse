@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { getFirestore, collection, query, orderBy, onSnapshot } from '@react-native-firebase/firestore';
 import { useLocalSearchParams, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 type Job = {
   job_id: string;
@@ -55,7 +56,7 @@ export default function JobsScreen() {
   useEffect(() => {
     if (!highlight) return;
     setHighlightedId(highlight);
-    const timer = setTimeout(() => setHighlightedId(undefined), 4000);
+    const timer = setTimeout(() => setHighlightedId(undefined), 10000);
     return () => clearTimeout(timer);
   }, [highlight]);
 
@@ -79,7 +80,7 @@ export default function JobsScreen() {
   if (jobs.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyEmoji}>📭</Text>
+        <Ionicons name="file-tray-outline" size={40} color="#888" style={styles.emptyIcon} />
         <Text style={styles.emptyTitle}>No jobs yet</Text>
         <Text style={styles.emptySubtitle}>
           New postings from the T&P portal will show up here automatically.
@@ -129,8 +130,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
   },
-  emptyEmoji: {
-    fontSize: 40,
+  emptyIcon: {
     marginBottom: 12,
   },
   emptyTitle: {
