@@ -6,7 +6,7 @@ import { colors } from '../constants/colors';
 type Item = {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  route?: string;
+  route?: any;
   action?: () => void;
 };
 
@@ -52,8 +52,9 @@ export default function AppDrawer({ onClose }: { onClose: () => void }) {
               style={styles.row}
               onPress={() => {
                 onClose();
-                if (item.route) router.push(item.route);
-                else item.action?.();
+                if (item.route) router.push(item.route as any);
+                else if (item.action) item.action();
+                else router.push({ pathname: '/coming-soon', params: { title: item.label } });
               }}
             >
               <Ionicons name={item.icon} size={22} color={colors.primary} style={styles.rowIcon} />

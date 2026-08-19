@@ -1,15 +1,19 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
 import { colors } from '../constants/colors';
 
-export default function ComingSoon({ title }: { title: string }) {
+export default function ComingSoonScreen() {
+  const { title } = useLocalSearchParams<{ title?: string }>();
+
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen options={{ title: title || 'Coming Soon' }} />
       <Ionicons name="construct-outline" size={40} color={colors.textMuted} />
       <Text style={styles.text}>Currently in development</Text>
-      <Text style={styles.subtext}>This section isn't set up yet — check back soon.</Text>
+      <Text style={styles.subtext}>
+        {title ? `${title} isn't set up yet` : 'This section isn\'t set up yet'} — check back soon.
+      </Text>
     </View>
   );
 }
