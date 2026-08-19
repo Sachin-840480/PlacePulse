@@ -35,7 +35,7 @@ PlacePulse relies on the following third-party services to function:
 - **Firebase Cloud Messaging** — delivers push notifications.
 
 These services are provided by Google. Their use of data is governed by
-[Google's Privacy Policy](https://policies.google.com/privacy). We do not
+[Google&#39;s Privacy Policy](https://policies.google.com/privacy). We do not
 share any additional information with them beyond what is technically
 required for the app to function (e.g. your device's notification token,
 which Google's infrastructure uses to route the push).

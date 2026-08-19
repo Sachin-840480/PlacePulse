@@ -3,7 +3,7 @@ import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 
-const PRIVACY_POLICY_URL = 'https://sachin-840480.github.io/PlacePulse/privacy-policy/';
+const PRIVACY_POLICY_URL = 'https://sachin-840480.github.io/PlacePulse/privacy-policy.html';
 const GITHUB_URL = 'https://github.com/Sachin-840480/PlacePulse';
 
 export default function AboutScreen() {
