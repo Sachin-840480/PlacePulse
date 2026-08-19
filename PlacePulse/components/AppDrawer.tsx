@@ -1,10 +1,12 @@
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Fontisto from '@expo/vector-icons/Fontisto';
 import { colors } from '../constants/colors';
 
 type Item = {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
+  iconFamily?: 'ionicons' | 'fontisto';
   label: string;
   route?: any;
   action?: () => void;
@@ -27,6 +29,23 @@ const sections: { label: string; items: Item[] }[] = [
     label: 'Project',
     items: [
       { icon: 'logo-github', label: 'GitHub', action: () => Linking.openURL('https://github.com/Sachin-840480') },
+      {
+        icon: 'bug-outline',
+        label: 'Report an Issue',
+        action: () =>
+          Linking.openURL(
+            'https://github.com/Sachin-840480/PlacePulse/issues/new?title=&body=**Describe%20the%20issue**%0A%0A**Steps%20to%20reproduce**%0A%0A**Device%20%2F%20Android%20version**%0A'
+          ),
+      },
+      {
+        icon: 'email',
+        iconFamily: 'fontisto',
+        label: 'Send Feedback',
+        action: () =>
+          Linking.openURL(
+            'mailto:sachin1712003@gmail.com?subject=PlacePulse%20Feedback&body=Hi%20Sachin%2C%0A%0A'
+          ),
+      },
       { icon: 'share-social-outline', label: 'Share App' },
     ],
   },
@@ -57,7 +76,11 @@ export default function AppDrawer({ onClose }: { onClose: () => void }) {
                 else router.push({ pathname: '/coming-soon', params: { title: item.label } });
               }}
             >
-              <Ionicons name={item.icon} size={22} color={colors.primary} style={styles.rowIcon} />
+              {item.iconFamily === 'fontisto' ? (
+                  <Fontisto name={item.icon as any} size={20} color={colors.primary} style={styles.rowIcon} />
+              ) : (
+                <Ionicons name={item.icon as any} size={22} color={colors.primary} style={styles.rowIcon} />
+              )}
               <Text style={styles.rowLabel}>{item.label}</Text>
             </TouchableOpacity>
           ))}
