@@ -92,6 +92,13 @@ def send_push_notification(new_jobs: list):
     print(f"FCM push sent: {response}")
 
 
+def write_sync_meta(db):
+    """Record that a sync run happened, regardless of whether new jobs were found."""
+    db.collection("meta").document("sync").set({
+        "lastSyncedAt": firestore.SERVER_TIMESTAMP,
+    })
+
+
 def sync():
     db = init_firebase()
 
@@ -102,10 +109,12 @@ def sync():
 
     if not new_jobs:
         print(f"No new jobs. {len(scraped_jobs)} total on portal, all already known.")
+        write_sync_meta(db)
         return
 
     print(f"Found {len(new_jobs)} new job(s): {[j['company'] for j in new_jobs]}")
     write_new_jobs(db, new_jobs)
+    write_sync_meta(db)
     send_push_notification(new_jobs)
 
 
