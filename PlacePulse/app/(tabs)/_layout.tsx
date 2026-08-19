@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -28,12 +28,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="jobs"
+        name="jobs-tab-placeholder"
         options={{
           title: "Jobs",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="briefcase" color={color} size={size} />
           ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push('/jobs');
+          },
         }}
       />
     </Tabs>
