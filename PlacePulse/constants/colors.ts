@@ -10,3 +10,16 @@ export const colors = {
   chevron: '#B7D9D6',
   accent: '#D97706',       // amber — "open to apply" stat
 };
+
+
+// export const colors = {
+//   primary: '#087F8C',
+//   primaryDark: '#065E68',
+//   primaryLight: '#DFF3F6',
+//   bg: '#F1FAFC',
+//   card: '#F8FCFD',
+//   border: '#A8D9DE',
+//   text: '#17242A',
+//   textMuted: '#60757D',
+//   chevron: '#B7D9D6',
+// };
