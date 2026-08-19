@@ -3,18 +3,64 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../constants/colors';
 
 export default function HomeScreen() {
   const [jobCount, setJobCount] = useState<number | null>(null);
+  const [openCount, setOpenCount] = useState<number | null>(null);
+  const [newThisWeek, setNewThisWeek] = useState<number | null>(null);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
 
   useEffect(() => {
     const db = getFirestore();
-    // Lightweight count-only listener — just for the tile subtitle, doesn't
-    // need full job data like the jobs screen does.
-    const unsubscribe = onSnapshot(collection(db, 'jobs'), (snapshot) => {
-      setJobCount(snapshot.size);
-    });
-    return () => unsubscribe();
+
+    const unsubAll = onSnapshot(
+      collection(db, 'jobs'),
+      (snap) => {
+        setJobCount(snap.size);
+
+        const now = Date.now();
+        let open = 0;
+        let newWeek = 0;
+
+        snap.docs.forEach((d) => {
+          const data = d.data();
+
+          if (data.deadline) {
+            const [dd, mm, yyyy] = data.deadline.split('/').map(Number);
+            const deadlineDate = new Date(yyyy, mm - 1, dd);
+            if (deadlineDate.getTime() >= now) open++;
+          } else {
+            open++;
+          }
+
+          const posted = data.posted_on_date?.toDate?.();
+          if (posted && now - posted.getTime() <= 7 * 24 * 60 * 60 * 1000) newWeek++;
+        });
+
+        setOpenCount(open);
+        setNewThisWeek(newWeek);
+      },
+      (err) => console.error('jobs/all error:', err)
+    );
+
+const unsubMeta = onSnapshot(
+  collection(db, 'meta'),
+  (snap) => {
+    console.log('meta docs:', snap.docs.map(d => ({ id: d.id, data: d.data() })));
+    const doc = snap.docs.find((d) => d.id === 'sync');
+    if (doc) {
+      const ts = doc.data().lastSyncedAt?.toDate?.();
+      if (ts) setLastSynced(timeAgo(ts));
+    }
+  },
+  (err) => console.error('meta error:', err)
+);
+
+    return () => {
+      unsubAll();
+      unsubMeta();
+    };
   }, []);
 
   return (
@@ -29,45 +75,96 @@ export default function HomeScreen() {
         <Text style={styles.tagline}>Never miss a placement update</Text>
       </View>
 
-      <View style={styles.tiles}>
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/jobs')}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="briefcase-outline" size={24} color="#2563eb" />
-          </View>
-          <View style={styles.tileTextWrap}>
-            <Text style={styles.tileTitle}>Job Listings</Text>
-            <Text style={styles.tileSubtitle}>
-              {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
-        </TouchableOpacity>
-
-        <View style={styles.tile}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="notifications-outline" size={24} color="#2563eb" />
-          </View>
-          <View style={styles.tileTextWrap}>
-            <Text style={styles.tileTitle}>Notifications</Text>
-            <Text style={styles.tileSubtitle}>You'll be alerted the moment a new job is posted</Text>
-          </View>
+      {/* Full width: Job Listings */}
+      <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/jobs')}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="briefcase-outline" size={24} color={colors.primary} />
         </View>
-        
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/modal')}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="information-circle-outline" size={24} color="#2563eb" />
-          </View>
-          <View style={styles.tileTextWrap}>
-            <Text style={styles.tileTitle}>App Info</Text>
-            <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
-        </TouchableOpacity>
+        <View style={styles.tileTextWrap}>
+          <Text style={styles.tileTitle}>Job Listings</Text>
+          <Text style={styles.tileSubtitle}>
+            {jobCount === null ? 'Loading…' : `${jobCount} opening${jobCount === 1 ? '' : 's'} tracked`}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
+      </TouchableOpacity>
+
+      {/* Half-width stat grid */}
+      <View style={styles.statGrid}>
+        <StatCard
+          icon="layers-outline"
+          label="Total Jobs"
+          value={jobCount === null ? '–' : jobCount}
+        />
+        <StatCard
+          icon="checkmark-circle-outline"
+          label="Open to Apply"
+          value={openCount === null ? '–' : openCount}
+          accent
+        />
+        <StatCard
+          icon="trending-up-outline"
+          label="New This Week"
+          value={newThisWeek === null ? '–' : newThisWeek}
+        />
+        <StatCard
+          icon="time-outline"
+          label="Last Synced"
+          value={lastSynced ?? '–'}
+          small
+        />
       </View>
+
+      {/* Full width: About */}
+      <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/modal')}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
+        </View>
+        <View style={styles.tileTextWrap}>
+          <Text style={styles.tileTitle}>App Info</Text>
+          <Text style={styles.tileSubtitle}>About PlacePulse, how it works</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.chevron} />
+      </TouchableOpacity>
 
       <Text style={styles.footer}>Built for BIT Mesra T&P · unofficial</Text>
     </ScrollView>
   );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  accent,
+  small,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string | number;
+  accent?: boolean;
+  small?: boolean;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <Ionicons
+        name={icon}
+        size={20}
+        color={accent ? colors.accent : colors.primary}
+        style={styles.statIcon}
+      />
+      <Text style={[styles.statValue, small && styles.statValueSmall]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function timeAgo(date: Date): string {
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 const styles = StyleSheet.create({
@@ -75,11 +172,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#f7fafa',
+    backgroundColor: colors.bg,
   },
   hero: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 32,
   },
   heroIcon: {
     width: 84,
@@ -89,33 +186,28 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
   },
   tagline: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textMuted,
     marginTop: 4,
   },
-  tiles: {
-    gap: 12,
-  },
-  tile: {
+  fullCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    marginBottom: 12,
   },
   iconContainer: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -126,18 +218,49 @@ const styles = StyleSheet.create({
   tileTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.text,
     marginBottom: 2,
   },
   tileSubtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: colors.textMuted,
     lineHeight: 18,
   },
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  statIcon: {
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  statValueSmall: {
+    fontSize: 16,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
   footer: {
-    marginTop: 40,
+    marginTop: 20,
     textAlign: 'center',
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textMuted,
   },
 });
