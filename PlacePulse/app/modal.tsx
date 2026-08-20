@@ -162,6 +162,8 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     marginLeft: 12,
+    borderRadius:18,
+    backgroundColor: '#000000'
   },
   sectionLabel: {
     fontSize: 12,
