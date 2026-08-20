@@ -45,6 +45,16 @@ export default {
       "expo-web-browser",
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
+      [
+        "expo-build-properties",
+        {
+          android: {
+            enableProguardInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+            abiFilters: ["arm64-v8a"],
+          },
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
