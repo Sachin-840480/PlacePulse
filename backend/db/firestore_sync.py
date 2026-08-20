@@ -83,7 +83,7 @@ def send_push_notification(new_jobs: list):
         android=messaging.AndroidConfig(
             priority="high",
             notification=messaging.AndroidNotification(
-                channel_id="new-jobs-high",  # must match NEW_JOBS_CHANNEL_ID in the app
+                channel_id="new-jobs-high-v2",  # must match NEW_JOBS_CHANNEL_ID in the app
             ),
         ),
     )

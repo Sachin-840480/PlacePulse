@@ -2,14 +2,12 @@ import { useEffect } from 'react';
 import { router } from 'expo-router';
 import {
   getMessaging,
-  requestPermission,
-  AuthorizationStatus,
   subscribeToTopic,
   onMessage,
   onNotificationOpenedApp,
   getInitialNotification,
 } from '@react-native-firebase/messaging';
-import notifee, { EventType } from '@notifee/react-native';
+import notifee, { EventType, AuthorizationStatus } from '@notifee/react-native';
 import { createNewJobsChannel, displayForegroundNotification } from './notificationChannel';
 
 const NEW_JOBS_TOPIC = 'new-jobs';
@@ -27,7 +25,9 @@ function navigateToJob(jobId: string | undefined) {
 /**
  * Call this once, near the root of the app (e.g. in the root layout).
  * Handles:
- *  - Requesting notification permission (Android 13+ requires this explicitly)
+ *  - Requesting notification permission via Notifee (Android 13+ requires this
+ *    explicitly; RN Firebase's own requestPermission/hasPermission are deprecated
+ *    and are documented no-ops on Android API 32 and below, so Notifee owns this)
  *  - Creating the high-importance notification channel
  *  - Subscribing the device to the 'new-jobs' FCM topic
  *  - Listening for foreground messages and displaying them via notifee
@@ -45,10 +45,8 @@ export function useFcmSetup() {
 
         await createNewJobsChannel();
 
-        const authStatus = await requestPermission(messagingInstance);
-        const enabled =
-          authStatus === AuthorizationStatus.AUTHORIZED ||
-          authStatus === AuthorizationStatus.PROVISIONAL;
+        const permission = await notifee.requestPermission();
+        const enabled = permission.authorizationStatus === AuthorizationStatus.AUTHORIZED;
 
         if (!enabled) {
           console.log('Notification permission not granted');

@@ -1,6 +1,6 @@
 import notifee, { AndroidImportance } from '@notifee/react-native';
 
-export const NEW_JOBS_CHANNEL_ID = 'new-jobs-high';
+export const NEW_JOBS_CHANNEL_ID = 'new-jobs-high-v2';
 
 /**
  * Creates (or updates) a high-importance Android notification channel.
