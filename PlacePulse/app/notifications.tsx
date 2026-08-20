@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../constants/colors';
+import { useColors } from '../hooks/use-colors';
 
 export default function NotificationsScreen() {
+  const colors = useColors();
+  const styles = getStyles(colors);
+  
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Notifications' }} />
@@ -23,7 +26,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,

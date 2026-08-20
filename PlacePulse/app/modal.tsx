@@ -1,12 +1,15 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, Linking, ScrollView } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../constants/colors';
+import { useColors } from '../hooks/use-colors';
 
 const PRIVACY_POLICY_URL = 'https://sachin-840480.github.io/PlacePulse/privacy-policy.html';
 const GITHUB_URL = 'https://github.com/Sachin-840480/PlacePulse';
 
 export default function AboutScreen() {
+  const colors = useColors();
+  const styles = getStyles(colors);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -103,7 +106,7 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: colors.bg,

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, onSnapshot } from '@react-native-firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../constants/colors';
+import { useColors } from '../../hooks/use-colors';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -24,6 +24,8 @@ export default function HomeScreen() {
   const [newThisWeek, setNewThisWeek] = useState<number | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const colors = useColors();
+  const styles = getStyles(colors);
   
   const dragX = useSharedValue(-DRAWER_WIDTH);
   const startX = useSharedValue(0);
@@ -166,10 +168,10 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <View style={styles.statGrid}>
-              <StatCard icon="layers-outline" label="Total Jobs" value={jobCount === null ? '–' : jobCount} />
-              <StatCard icon="checkmark-circle-outline" label="Open to Apply" value={openCount === null ? '–' : openCount} accent />
-              <StatCard icon="trending-up-outline" label="New This Week" value={newThisWeek === null ? '–' : newThisWeek} />
-              <StatCard icon="time-outline" label="Last Synced" value={lastSynced ?? '–'} small />
+              <StatCard icon="layers-outline" label="Total Jobs" value={jobCount === null ? '–' : jobCount} colors={colors} />
+              <StatCard icon="checkmark-circle-outline" label="Open to Apply" value={openCount === null ? '–' : openCount} accent colors={colors} />
+              <StatCard icon="trending-up-outline" label="New This Week" value={newThisWeek === null ? '–' : newThisWeek} colors={colors} />
+              <StatCard icon="time-outline" label="Last Synced" value={lastSynced ?? '–'} small colors={colors} />
             </View>
 
             <TouchableOpacity style={styles.fullCard} onPress={() => router.push('/modal')}>
@@ -205,13 +207,16 @@ function StatCard({
   value,
   accent,
   small,
+  colors, 
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string | number;
   accent?: boolean;
   small?: boolean;
+  colors: ReturnType<typeof useColors>
 }) {
+  const styles = getStyles(colors);
   return (
     <View style={styles.statCard}>
       <Ionicons
@@ -234,7 +239,7 @@ function timeAgo(date: Date): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,

@@ -13,6 +13,7 @@ import {
 import { getFirestore, collection, query, orderBy, onSnapshot } from '@react-native-firebase/firestore';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../hooks/use-colors';
 
 type Job = {
   job_id: string;
@@ -26,6 +27,9 @@ type Job = {
 const PAGE_SIZE = 20;
 
 export default function JobsScreen() {
+  const colors = useColors();
+  const styles = getStyles(colors);
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +100,7 @@ export default function JobsScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading jobs…</Text>
       </View>
     );
@@ -105,11 +109,11 @@ export default function JobsScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={18} color="#888" style={styles.searchIcon} />
+        <Ionicons name="search-outline" size={18} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by company"
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.placeholder}
           value={searchText}
           onChangeText={setSearchText}
           autoCorrect={false}
@@ -117,14 +121,14 @@ export default function JobsScreen() {
         />
         {searchText.length > 0 && (
           <TouchableOpacity onPress={() => setSearchText('')} hitSlop={8}>
-            <Ionicons name="close-circle" size={18} color="#999" />
+            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
 
       {jobs.length === 0 ? (
         <View style={styles.centered}>
-          <Ionicons name="file-tray-outline" size={40} color="#888" style={styles.emptyIcon} />
+          <Ionicons name="file-tray-outline" size={40} color={colors.textMuted} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>No jobs yet</Text>
           <Text style={styles.emptySubtitle}>
             New postings from the T&P portal will show up here automatically.
@@ -132,7 +136,7 @@ export default function JobsScreen() {
         </View>
       ) : filteredJobs.length === 0 ? (
         <View style={styles.centered}>
-          <Ionicons name="search-outline" size={40} color="#888" style={styles.emptyIcon} />
+          <Ionicons name="search-outline" size={40} color={colors.textMuted} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>No matches</Text>
           <Text style={styles.emptySubtitle}>
             No jobs found for "{searchText}".
@@ -144,14 +148,14 @@ export default function JobsScreen() {
           keyExtractor={(item) => item.job_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d9488']} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
           }
           onEndReachedThreshold={0.6}
           onEndReached={loadMore}
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footerLoading}>
-                <ActivityIndicator size="small" color="#0d9488" />
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
             ) : filteredJobs.length > PAGE_SIZE ? (
               <Text style={styles.footerEnd}>You've reached the end</Text>
@@ -180,15 +184,15 @@ export default function JobsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bg,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     marginHorizontal: 12,
     marginTop: 12,
     marginBottom: 4,
@@ -196,7 +200,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e5e5',
+    borderColor: colors.border,
   },
   searchIcon: {
     marginRight: 8,
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#222',
+    color: colors.text,
     padding: 0,
   },
   centered: {
@@ -216,7 +220,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#888',
+    color: colors.textMuted,
   },
   emptyIcon: {
     marginBottom: 12,
@@ -225,10 +229,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 6,
+    color: colors.text,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   list: {
@@ -242,11 +247,11 @@ const styles = StyleSheet.create({
   footerEnd: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#aaa',
+    color: colors.textMuted,
     paddingVertical: 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -258,12 +263,12 @@ const styles = StyleSheet.create({
   },
   cardHighlighted: {
     borderWidth: 2,
-    borderColor: '#0d9488',
-    backgroundColor: '#f0fdfa',
+    borderColor: colors.primary,
+  backgroundColor: colors.primaryLight,
   },
   newBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#0d9488',
+    backgroundColor: colors.primary,
     color: '#fff',
     fontSize: 11,
     fontWeight: '700',
@@ -276,15 +281,16 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     marginBottom: 4,
+    color: colors.text,
   },
   meta: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textMuted,
     marginBottom: 2,
   },
   button: {
     marginTop: 10,
-    backgroundColor: '#0d9488',
+    backgroundColor: colors.primary,
     paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',

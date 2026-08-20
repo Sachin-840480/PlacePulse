@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native'
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Fontisto from '@expo/vector-icons/Fontisto';
-import { colors } from '../constants/colors';
+import { useColors } from '../hooks/use-colors';
 
 type Item = {
   icon: string;
@@ -56,6 +56,9 @@ const sections: { label: string; items: Item[] }[] = [
 ];
 
 export default function AppDrawer({ onClose }: { onClose: () => void }) {
+  const colors = useColors();
+  const styles = getStyles(colors);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>PlacePulse</Text>
@@ -90,7 +93,7 @@ export default function AppDrawer({ onClose }: { onClose: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

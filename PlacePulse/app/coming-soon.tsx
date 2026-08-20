@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../constants/colors';
+import { useColors } from '../hooks/use-colors';
 
 export default function ComingSoonScreen() {
+  const colors = useColors();
+  const styles = getStyles(colors);
   const { title } = useLocalSearchParams<{ title?: string }>();
 
   return (
@@ -18,7 +20,7 @@ export default function ComingSoonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
