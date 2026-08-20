@@ -249,6 +249,7 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     marginBottom: 16,
+    borderRadius:22,
   },
   topBar: {
     flexDirection: 'row',

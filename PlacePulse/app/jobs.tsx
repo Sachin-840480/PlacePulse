@@ -232,7 +232,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   list: {
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 60,
   },
   footerLoading: {
     paddingVertical: 20,

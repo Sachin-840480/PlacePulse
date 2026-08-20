@@ -34,9 +34,14 @@ export default function AboutScreen() {
 
       <Text style={styles.sectionLabel}>Developer</Text>
       <View style={styles.devCard}>
-        <View style={styles.avatarPlaceholder}>
+        {/* <View style={styles.avatarPlaceholder}>
           <Ionicons name="person" size={22} color={colors.primary} />
-        </View>
+        </View> */}
+          <Image
+            source={require('../assets/images/dev.png')}
+            style={styles.devCardIcon}
+            resizeMode="contain"
+          />
         <View>
           <Text style={styles.devName}>Satyam</Text>
           <Text style={styles.devTagline}>Python, AI, Cloud</Text>
@@ -164,6 +169,12 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 0.5,
     marginBottom: 10,
+  },
+  devCardIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 14,
   },
   devCard: {
     flexDirection: 'row',
