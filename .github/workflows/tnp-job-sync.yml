@@ -39,7 +39,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Write Firebase service account key from secret
-        run: echo "${{ secrets.FIREBASE_KEY_JSON }}" > firebase-key.json
+        env:
+          FIREBASE_KEY_JSON: ${{ secrets.FIREBASE_KEY_JSON }}
+        run: echo "$FIREBASE_KEY_JSON" > firebase-key.json
 
       - name: Run sync
         env:
