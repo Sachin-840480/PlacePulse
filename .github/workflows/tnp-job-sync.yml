@@ -1,0 +1,48 @@
+name: T&P Job Sync
+ 
+on:
+  schedule:
+    # ── Every 10 minutes, IST 04:00 – 23:59 (UTC 22:30 – 18:30) ──
+    - cron: "30,40,50 22 * * *"      # 22:30, 22:40, 22:50 UTC
+    - cron: "*/10 23,0-17 * * *"     # 23:00 → 17:50 UTC, every 10 min
+    - cron: "0,10,20 18 * * *"       # 18:00, 18:10, 18:20 UTC
+ 
+    # ── Every 30 minutes, IST 00:00 – 03:59 (UTC 18:30 – 22:30) ──
+    - cron: "30 18 * * *"            # 18:30 UTC
+    - cron: "0,30 19-21 * * *"       # 19:00 → 21:30 UTC, every 30 min
+    - cron: "0 22 * * *"             # 22:00 UTC
+ 
+  workflow_dispatch: {}  # lets you manually trigger a run from the Actions tab, for testing
+ 
+concurrency:
+  group: tnp-job-sync
+  cancel-in-progress: false  # never cancel a run in progress; just skip overlapping triggers
+ 
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+ 
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+ 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+ 
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 firebase-admin
+ 
+      - name: Write Firebase service account key from secret
+        run: echo "${{ secrets.FIREBASE_KEY_JSON }}" > firebase-key.json
+ 
+      - name: Run sync
+        env:
+          TNP_USERNAME: ${{ secrets.TNP_USERNAME }}
+          TNP_PASSWORD: ${{ secrets.TNP_PASSWORD }}
+        run: python -m db.firestore_sync
